@@ -1,0 +1,54 @@
+name: tiktok-dl_CI
+on: [push, pull_request]
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Set up Go 1.13
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+      id: go
+
+    - name: Set up node 10
+      uses: actions/setup-node@v1
+      with:
+        node-version: '10.x'
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v1
+
+    - name: Get dependencies
+      run: |
+        npm install
+        npm run install-dependencies
+    - name: Run unit tests
+      run: npm run test
+
+    - name: Build
+      run: npm run build:dist
+    
+    - name: Copy license
+      run: cp LICENSE out
+
+    - name: Add execute permission
+      run: chmod +x out/tiktok-dl
+
+    - name: Upload Unix Artifacts
+      if: startsWith(matrix.os, 'ubuntu-')
+      uses: actions/upload-artifact@v1
+      with:
+        name: tiktok-dl_linux
+        path: out
+        
+    - name: Upload Windows Artifacts
+      if: startsWith(matrix.os, 'windows-')
+      uses: actions/upload-artifact@v1
+      with:
+        name: tiktok-dl_win64
+        path: out
